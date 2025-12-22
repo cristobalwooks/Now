@@ -63,8 +63,8 @@ button {
 .zzz {
   font-size: 18px;
   color: #4fc3f7;
+  letter-spacing: 6px;
   animation: float 2s infinite ease-in-out;
-  letter-spacing: 4px;
 }
 @keyframes float {
   0% { transform: translateY(0); opacity: .6; }
@@ -72,7 +72,6 @@ button {
   100% { transform: translateY(0); opacity: .6; }
 }
 
-/* 👋 POŻEGNANIE */
 .goodbye {
   margin-top: 40px;
   font-size: 14px;
@@ -124,23 +123,29 @@ button {
 <!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
   <p>Chaos zniknął. Dobra robota.</p>
-  <button class="gray" onclick="sleep()">Odpocznij</button>
+  <button class="gray" onclick="sleep()">Odpoczywam</button>
   <button class="red" onclick="reset()">Nowy chaos</button>
 </div>
 
 <!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
-  <div class="zzz">z z z z z</div>
+  <div class="zzz">z z z z z z</div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
 
 <script>
+const API = "https://now-production-9649.up.railway.app";
+
 let selectedTime = null;
 let hasDoneAnything = false;
 let lastAutoDecided = false;
 
+/* 🔒 RESET UI PRZY STARCIE */
+hideAll();
+idleBox.classList.remove("hidden");
+
 async function getState() {
-  const res = await fetch("/state");
+  const res = await fetch(API + "/state");
   return res.json();
 }
 
@@ -162,7 +167,7 @@ async function render() {
 
   if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
     lastAutoDecided = true;
-    await fetch("/decide", { method: "POST" });
+    await fetch(API + "/decide", { method: "POST" });
     return render();
   }
 
@@ -176,16 +181,20 @@ async function render() {
 
     chaosInput.value = state.chaos.join("\n");
     idleBox.classList.remove("hidden");
+    return;
   }
-  else if (state.status === "DECIDED") {
+
+  if (state.status === "DECIDED") {
     decidedTask.innerText = state.currentTask;
     decideText.innerHTML =
       state.chaos.length === 1
         ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
         : "To jest najlepszy ruch TERAZ.";
     decidedBox.classList.remove("hidden");
+    return;
   }
-  else if (state.status === "DOING") {
+
+  if (state.status === "DOING") {
     doingTask.innerText = state.currentTask;
     doingBox.classList.remove("hidden");
   }
@@ -203,19 +212,19 @@ async function decide() {
     const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
     if (!tasks.length) return;
 
-    await fetch("/tasks", {
+    await fetch(API + "/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tasks })
     });
   }
 
-  await fetch("/decide", { method: "POST" });
+  await fetch(API + "/decide", { method: "POST" });
   render();
 }
 
 async function startTask() {
-  await fetch("/start", { method: "POST" });
+  await fetch(API + "/start", { method: "POST" });
   render();
 }
 
@@ -224,7 +233,7 @@ async function doneTask() {
   el.classList.add("fade-up");
 
   setTimeout(async () => {
-    await fetch("/done", { method: "POST" });
+    await fetch(API + "/done", { method: "POST" });
     hasDoneAnything = true;
     selectedTime = null;
     el.classList.remove("fade-up");
@@ -240,14 +249,14 @@ async function skipTask() {
     return;
   }
 
-  await fetch("/later", { method: "POST" });
+  await fetch(API + "/later", { method: "POST" });
   selectedTime = null;
   lastAutoDecided = false;
   render();
 }
 
 async function reset() {
-  await fetch("/tasks", {
+  await fetch(API + "/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tasks: [] })
