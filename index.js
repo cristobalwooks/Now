@@ -12,7 +12,9 @@ const __dirname = path.dirname(__filename);
 // ====== MIDDLEWARE ======
 app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
+
+// 👉 KLUCZOWA LINIJKA (PWA)
+app.use(express.static(path.join(__dirname, "public")));
 
 // ====== STAN APLIKACJI ======
 let chaos = [];
@@ -36,7 +38,7 @@ function decideNowTask(tasks) {
 // ====== ROUTES ======
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/state", (req, res) => {
@@ -97,4 +99,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log("NOW backend działa na porcie", PORT);
 });
-;
