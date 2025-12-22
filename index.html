@@ -38,29 +38,16 @@ body.fade-out {
 
 #introLogo {
   font-size: 64px;
-  letter-spacing: 12px;
+  letter-spacing: 14px;
   font-weight: bold;
   animation: introAnim 1.4s ease forwards;
 }
 
 @keyframes introAnim {
-  0% {
-    opacity: 0;
-    letter-spacing: 40px;
-  }
-  40% {
-    opacity: 1;
-    letter-spacing: 12px;
-  }
-  70% {
-    opacity: 1;
-    letter-spacing: 12px;
-  }
-  100% {
-    opacity: 0;
-    letter-spacing: 0;
-    transform: scale(0.6);
-  }
+  0% { opacity: 0; letter-spacing: 40px; }
+  40% { opacity: 1; letter-spacing: 14px; }
+  70% { opacity: 1; letter-spacing: 14px; }
+  100% { opacity: 0; letter-spacing: 0; transform: scale(0.6); }
 }
 
 .hidden { display: none; }
@@ -191,17 +178,24 @@ button {
 <script>
 const API = "https://now-production-9649.up.railway.app";
 
-/* ===== INTRO LOGIC (once per day) ===== */
+/* ===== INTRO LOGIC (SAFE) ===== */
 const todayKey = new Date().toISOString().slice(0, 10);
 const lastIntroDay = localStorage.getItem("introSeen");
+const intro = document.getElementById("introScreen");
+
+function startApp() {
+  intro.classList.add("hidden");
+  render();
+}
 
 if (lastIntroDay !== todayKey) {
-  const intro = document.getElementById("introScreen");
   intro.classList.remove("hidden");
   setTimeout(() => {
-    intro.classList.add("hidden");
     localStorage.setItem("introSeen", todayKey);
+    startApp();
   }, 1400);
+} else {
+  startApp();
 }
 
 let selectedTime = null;
@@ -220,118 +214,4 @@ async function getState() {
 }
 
 /* ====== UI ====== */
-function setTime(t) {
-  selectedTime = t;
-  ["t5","t15","t30"].forEach(id =>
-    document.getElementById(id).classList.remove("active")
-  );
-  document.getElementById("t"+t).classList.add("active");
-}
-
-async function render() {
-  const state = await getState();
-  hideAll();
-  header.classList.remove("hidden");
-  subtitle.classList.remove("hidden");
-
-  if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
-    lastAutoDecided = true;
-    await fetch(API + "/decide", { method: "POST" });
-    return render();
-  }
-
-  if (state.status === "IDLE") {
-    lastAutoDecided = false;
-    if (state.chaos.length === 0) {
-      (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
-      return;
-    }
-    chaosInput.value = state.chaos.join("\n");
-    idleBox.classList.remove("hidden");
-    return;
-  }
-
-  if (state.status === "DECIDED") {
-    decidedTask.innerText = state.currentTask;
-    decideText.innerHTML =
-      state.chaos.length === 1
-        ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
-        : "To jest najlepszy ruch TERAZ.";
-    decidedBox.classList.remove("hidden");
-    return;
-  }
-
-  if (state.status === "DOING") {
-    doingTask.innerText = state.currentTask;
-    doingBox.classList.remove("hidden");
-  }
-}
-
-/* ====== ACTIONS ====== */
-async function decide() {
-  if (!selectedTime) return alert("Wybierz czas na START.");
-  const state = await getState();
-  if (state.chaos.length === 0) {
-    const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
-    if (!tasks.length) return;
-    await fetch(API + "/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tasks })
-    });
-  }
-  await fetch(API + "/decide", { method: "POST" });
-  render();
-}
-
-async function startTask() {
-  await fetch(API + "/start", { method: "POST" });
-  render();
-}
-
-async function doneTask() {
-  const el = doingTask;
-  el.classList.add("fade-up");
-  setTimeout(async () => {
-    await fetch(API + "/done", { method: "POST" });
-    hasDoneAnything = true;
-    selectedTime = null;
-    el.classList.remove("fade-up");
-    render();
-  }, 450);
-}
-
-async function skipTask() {
-  const state = await getState();
-  if (state.chaos.length === 1) return sleep();
-  await fetch(API + "/later", { method: "POST" });
-  selectedTime = null;
-  lastAutoDecided = false;
-  render();
-}
-
-async function reset() {
-  await fetch(API + "/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tasks: [] })
-  });
-  chaosInput.value = "";
-  hasDoneAnything = false;
-  selectedTime = null;
-  lastAutoDecided = false;
-  render();
-}
-
-function sleep() {
-  hideAll();
-  subtitle.classList.add("hidden");
-  sleepBox.classList.remove("hidden");
-  setTimeout(() => document.body.classList.add("fade-out"), 5500);
-}
-
-render();
-</script>
-
-</body>
-</html>
+function
