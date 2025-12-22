@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>NOW</title>
+
+<style>
+body {
+  background: #0b0b0b;
+  color: #f2f2f2;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 40px;
+}
+
+textarea {
+  width: 320px;
+  height: 120px;
+}
+
+button {
+  margin: 8px;
+  padding: 12px 18px;
+  font-size: 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.red { background: #e53935; color: white; }
+.green { background: #2ecc71; color: black; }
+.gray { background: #444; color: white; }
+
+.box {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #333;
+}
+
+.hidden { display: none; }
+
+.time button { opacity: 0.4; }
+.time button.active {
+  opacity: 1;
+  border: 2px solid white;
+}
+
+.final {
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+/* ✨ ZROBIONE */
+.fade-up {
+  animation: fadeUp 0.45s ease-out forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 1; transform: translateY(0); filter: blur(0); }
+  to { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
+}
+
+/* 🌙 SLEEP */
+.zzz {
+  font-size: 18px;
+  color: #4fc3f7;
+  animation: float 2s infinite ease-in-out;
+  letter-spacing: 4px;
+}
+@keyframes float {
+  0% { transform: translateY(0); opacity: .6; }
+  50% { transform: translateY(-10px); opacity: 1; }
+  100% { transform: translateY(0); opacity: .6; }
+}
+
+/* 👋 POŻEGNANIE */
+.goodbye {
+  margin-top: 40px;
+  font-size: 14px;
+  color: #777;
+  opacity: 0;
+  animation: fadeIn 1.5s ease forwards;
+  animation-delay: 3s;
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<h1>NOW</h1>
+<p>Jedna linia = jedno zadanie</p>
+
+<!-- IDLE -->
+<div id="idleBox" class="box hidden">
+  <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
+
+  <div class="time">
+    <p>Ile masz czasu na START?</p>
+    <button id="t5" onclick="setTime('5')">5 min</button>
+    <button id="t15" onclick="setTime('15')">15 min</button>
+    <button id="t30" onclick="setTime('30')">30+ min</button>
+  </div>
+
+  <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
+</div>
+
+<!-- DECIDED -->
+<div id="decidedBox" class="box hidden">
+  <p id="decideText" class="final"></p>
+  <p id="decidedTask"></p>
+  <button class="green" onclick="startTask()">ZACZĄŁEM</button>
+  <button class="gray" onclick="skipTask()">NIE TERAZ</button>
+</div>
+
+<!-- DOING -->
+<div id="doingBox" class="box hidden">
+  <h2>ROBISZ</h2>
+  <p id="doingTask"></p>
+  <button class="green" onclick="doneTask()">ZROBIONE</button>
+</div>
+
+<!-- EMPTY -->
+<div id="emptyBox" class="box hidden">
+  <p>Chaos zniknął. Dobra robota.</p>
+  <button class="gray" onclick="sleep()">Odpocznij</button>
+  <button class="red" onclick="reset()">Nowy chaos</button>
+</div>
+
+<!-- SLEEP -->
+<div id="sleepBox" class="box hidden">
+  <div class="zzz">z z z z z</div>
+  <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
+</div>
+
+<script>
+let selectedTime = null;
+let hasDoneAnything = false;
+let lastAutoDecided = false;
+
+async function getState() {
+  const res = await fetch("/state");
+  return res.json();
+}
+
+function hideAll() {
+  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
+}
+
+function setTime(t) {
+  selectedTime = t;
+  ["t5","t15","t30"].forEach(id =>
+    document.getElementById(id).classList.remove("active")
+  );
+  document.getElementById("t"+t).classList.add("active");
+}
+
+async function render() {
+  const state = await getState();
+  hideAll();
+
+  if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
+    lastAutoDecided = true;
+    await fetch("/decide", { method: "POST" });
+    return render();
+  }
+
+  if (state.status === "IDLE") {
+    lastAutoDecided = false;
+
+    if (state.chaos.length === 0) {
+      (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
+      return;
+    }
+
+    chaosInput.value = state.chaos.join("\n");
+    idleBox.classList.remove("hidden");
+  }
+  else if (state.status === "DECIDED") {
+    decidedTask.innerText = state.currentTask;
+    decideText.innerHTML =
+      state.chaos.length === 1
+        ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
+        : "To jest najlepszy ruch TERAZ.";
+    decidedBox.classList.remove("hidden");
+  }
+  else if (state.status === "DOING") {
+    doingTask.innerText = state.currentTask;
+    doingBox.classList.remove("hidden");
+  }
+}
+
+async function decide() {
+  if (!selectedTime) {
+    alert("Wybierz czas na START.");
+    return;
+  }
+
+  const state = await getState();
+
+  if (state.chaos.length === 0) {
+    const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
+    if (!tasks.length) return;
+
+    await fetch("/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks })
+    });
+  }
+
+  await fetch("/decide", { method: "POST" });
+  render();
+}
+
+async function startTask() {
+  await fetch("/start", { method: "POST" });
+  render();
+}
+
+async function doneTask() {
+  const el = document.getElementById("doingTask");
+  el.classList.add("fade-up");
+
+  setTimeout(async () => {
+    await fetch("/done", { method: "POST" });
+    hasDoneAnything = true;
+    selectedTime = null;
+    el.classList.remove("fade-up");
+    render();
+  }, 450);
+}
+
+async function skipTask() {
+  const state = await getState();
+
+  if (state.chaos.length === 1) {
+    sleep();
+    return;
+  }
+
+  await fetch("/later", { method: "POST" });
+  selectedTime = null;
+  lastAutoDecided = false;
+  render();
+}
+
+async function reset() {
+  await fetch("/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tasks: [] })
+  });
+  chaosInput.value = "";
+  hasDoneAnything = false;
+  selectedTime = null;
+  lastAutoDecided = false;
+  render();
+}
+
+function sleep() {
+  hideAll();
+  sleepBox.classList.remove("hidden");
+}
+
+render();
+</script>
+
+</body>
+</html>

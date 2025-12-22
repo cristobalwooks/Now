@@ -1,0 +1,22 @@
+{
+  "name": "NOW – Co jest najlepszym ruchem TERAZ",
+  "short_name": "NOW",
+  "description": "NOW mówi Ci dokładnie, co jest najlepszym ruchem w tej chwili.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#ff2e2e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
