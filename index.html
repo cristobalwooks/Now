@@ -2,14 +2,14 @@
 <html lang="pl">
 <head>
   <link rel="manifest" href="/manifest.json">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="NOW">
-<meta name="theme-color" content="#0b0b0b">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="NOW">
+  <meta name="theme-color" content="#0b0b0b">
 
-<meta charset="UTF-8" />
-<title>NOW</title>
+  <meta charset="UTF-8" />
+  <title>NOW</title>
 
 <style>
 body {
@@ -25,7 +25,47 @@ body.fade-out {
   opacity: 0;
 }
 
+/* ===== INTRO ===== */
+#introScreen {
+  position: fixed;
+  inset: 0;
+  background: #0b0b0b;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
 
+#introLogo {
+  font-size: 64px;
+  letter-spacing: 12px;
+  font-weight: bold;
+  animation: introAnim 1.4s ease forwards;
+}
+
+@keyframes introAnim {
+  0% {
+    opacity: 0;
+    letter-spacing: 40px;
+  }
+  40% {
+    opacity: 1;
+    letter-spacing: 12px;
+  }
+  70% {
+    opacity: 1;
+    letter-spacing: 12px;
+  }
+  100% {
+    opacity: 0;
+    letter-spacing: 0;
+    transform: scale(0.6);
+  }
+}
+
+.hidden { display: none; }
+
+/* ===== UI ===== */
 textarea {
   width: 100%;
   max-width: 320px;
@@ -53,8 +93,6 @@ button {
   padding: 20px;
   border: 1px solid #333;
 }
-
-.hidden { display: none; }
 
 .time button { opacity: 0.4; }
 .time button.active {
@@ -105,26 +143,27 @@ button {
 
 <body>
 
+<!-- INTRO -->
+<div id="introScreen" class="hidden">
+  <div id="introLogo">NOW</div>
+</div>
+
 <div id="header">
   <h1>NOW</h1>
   <p id="subtitle">Jedna linia = jedno zadanie</p>
 </div>
 
-<!-- IDLE -->
 <div id="idleBox" class="box hidden">
   <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
-
   <div class="time">
     <p>Ile masz czasu na START?</p>
     <button id="t5" onclick="setTime('5')">5 min</button>
     <button id="t15" onclick="setTime('15')">15 min</button>
     <button id="t30" onclick="setTime('30')">30+ min</button>
   </div>
-
   <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
 </div>
 
-<!-- DECIDED -->
 <div id="decidedBox" class="box hidden">
   <p id="decideText" class="final"></p>
   <p id="decidedTask"></p>
@@ -132,21 +171,18 @@ button {
   <button class="gray" onclick="skipTask()">NIE TERAZ</button>
 </div>
 
-<!-- DOING -->
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
   <button class="green" onclick="doneTask()">ZROBIONE</button>
 </div>
 
-<!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
   <p>Chaos zniknął. Dobra robota.</p>
   <button class="gray" onclick="sleep()">Odpoczywam</button>
   <button class="red" onclick="reset()">Nowy chaos</button>
 </div>
 
-<!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
   <div class="zzz">z z z z z z</div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
@@ -154,6 +190,19 @@ button {
 
 <script>
 const API = "https://now-production-9649.up.railway.app";
+
+/* ===== INTRO LOGIC (once per day) ===== */
+const todayKey = new Date().toISOString().slice(0, 10);
+const lastIntroDay = localStorage.getItem("introSeen");
+
+if (lastIntroDay !== todayKey) {
+  const intro = document.getElementById("introScreen");
+  intro.classList.remove("hidden");
+  setTimeout(() => {
+    intro.classList.add("hidden");
+    localStorage.setItem("introSeen", todayKey);
+  }, 1400);
+}
 
 let selectedTime = null;
 let hasDoneAnything = false;
@@ -182,9 +231,8 @@ function setTime(t) {
 async function render() {
   const state = await getState();
   hideAll();
-
-  document.getElementById("header").classList.remove("hidden");
-  document.getElementById("subtitle").classList.remove("hidden");
+  header.classList.remove("hidden");
+  subtitle.classList.remove("hidden");
 
   if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
     lastAutoDecided = true;
@@ -194,12 +242,10 @@ async function render() {
 
   if (state.status === "IDLE") {
     lastAutoDecided = false;
-
     if (state.chaos.length === 0) {
       (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
       return;
     }
-
     chaosInput.value = state.chaos.join("\n");
     idleBox.classList.remove("hidden");
     return;
@@ -223,24 +269,17 @@ async function render() {
 
 /* ====== ACTIONS ====== */
 async function decide() {
-  if (!selectedTime) {
-    alert("Wybierz czas na START.");
-    return;
-  }
-
+  if (!selectedTime) return alert("Wybierz czas na START.");
   const state = await getState();
-
   if (state.chaos.length === 0) {
     const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
     if (!tasks.length) return;
-
     await fetch(API + "/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tasks })
     });
   }
-
   await fetch(API + "/decide", { method: "POST" });
   render();
 }
@@ -251,9 +290,8 @@ async function startTask() {
 }
 
 async function doneTask() {
-  const el = document.getElementById("doingTask");
+  const el = doingTask;
   el.classList.add("fade-up");
-
   setTimeout(async () => {
     await fetch(API + "/done", { method: "POST" });
     hasDoneAnything = true;
@@ -265,12 +303,7 @@ async function doneTask() {
 
 async function skipTask() {
   const state = await getState();
-
-  if (state.chaos.length === 1) {
-    sleep();
-    return;
-  }
-
+  if (state.chaos.length === 1) return sleep();
   await fetch(API + "/later", { method: "POST" });
   selectedTime = null;
   lastAutoDecided = false;
@@ -290,23 +323,15 @@ async function reset() {
   render();
 }
 
-/* 🌙 FINAL SLEEP */
 function sleep() {
   hideAll();
-  document.getElementById("subtitle").classList.add("hidden");
+  subtitle.classList.add("hidden");
   sleepBox.classList.remove("hidden");
-
-  setTimeout(() => {
-    document.body.classList.add("fade-out");
-  }, 5500);
+  setTimeout(() => document.body.classList.add("fade-out"), 5500);
 }
 
-/* ====== START ====== */
 render();
 </script>
 
 </body>
 </html>
-
-
-
