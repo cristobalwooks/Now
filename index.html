@@ -1,16 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <link rel="manifest" href="/manifest.json">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="NOW">
-<meta name="theme-color" content="#0b0b0b">
+  <meta charset="UTF-8" />
+  <title>NOW</title>
 
-<meta charset="UTF-8" />
-<title>NOW</title>
+  <link rel="manifest" href="/manifest.json">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="NOW">
+  <meta name="theme-color" content="#0b0b0b">
 
 <style>
 body {
@@ -25,7 +25,6 @@ body {
 body.fade-out {
   opacity: 0;
 }
-
 
 textarea {
   width: 100%;
@@ -79,25 +78,29 @@ button {
 
 /* 🌙 SLEEP */
 .zzz {
-  font-size: 16px;
-  color: #4fc3f7;
-  letter-spacing: 6px;
-  animation: float 2s infinite ease-in-out;
+  font-size: 26px;
+  color: #6fd3ff;
+  letter-spacing: 10px;
+  margin-top: 20px;
+  animation: float 3s infinite ease-in-out;
 }
+
 @keyframes float {
   0% { transform: translateY(0); opacity: .6; }
-  50% { transform: translateY(-10px); opacity: 1; }
+  50% { transform: translateY(-12px); opacity: 1; }
   100% { transform: translateY(0); opacity: .6; }
 }
 
 .goodbye {
-  margin-top: 30px;
-  font-size: 13px;
-  color: #777;
+  margin-top: 36px;
+  font-size: 15px;
+  color: #9a9a9a;
+  line-height: 1.5;
   opacity: 0;
-  animation: fadeIn 1.5s ease forwards;
-  animation-delay: 3s;
+  animation: fadeIn 1.8s ease forwards;
+  animation-delay: 3.2s;
 }
+
 @keyframes fadeIn {
   to { opacity: 1; }
 }
@@ -149,6 +152,7 @@ button {
 
 <!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
+  <div style="margin-top: 40px;"></div>
   <div class="zzz">z z z z z z</div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
@@ -304,15 +308,7 @@ function sleep() {
 
 /* ====== START ====== */
 render();
-  if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js");
-}
-
 </script>
 
 </body>
 </html>
-
-
-
-
