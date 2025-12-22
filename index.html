@@ -11,6 +11,11 @@ body {
   font-family: Arial, sans-serif;
   text-align: center;
   padding: 40px;
+  transition: opacity 1.5s ease;
+}
+
+body.fade-out {
+  opacity: 0;
 }
 
 textarea {
@@ -61,7 +66,7 @@ button {
 
 /* 🌙 SLEEP */
 .zzz {
-  font-size: 18px;
+  font-size: 16px;
   color: #4fc3f7;
   letter-spacing: 6px;
   animation: float 2s infinite ease-in-out;
@@ -73,8 +78,8 @@ button {
 }
 
 .goodbye {
-  margin-top: 40px;
-  font-size: 14px;
+  margin-top: 30px;
+  font-size: 13px;
   color: #777;
   opacity: 0;
   animation: fadeIn 1.5s ease forwards;
@@ -88,8 +93,10 @@ button {
 
 <body>
 
-<h1>NOW</h1>
-<p>Jedna linia = jedno zadanie</p>
+<div id="header">
+  <h1>NOW</h1>
+  <p id="subtitle">Jedna linia = jedno zadanie</p>
+</div>
 
 <!-- IDLE -->
 <div id="idleBox" class="box hidden">
@@ -140,19 +147,18 @@ let selectedTime = null;
 let hasDoneAnything = false;
 let lastAutoDecided = false;
 
-/* 🔒 RESET UI PRZY STARCIE */
-hideAll();
-idleBox.classList.remove("hidden");
+/* ====== UTILS ====== */
+function hideAll() {
+  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
+}
 
+/* ====== STATE ====== */
 async function getState() {
   const res = await fetch(API + "/state");
   return res.json();
 }
 
-function hideAll() {
-  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
-}
-
+/* ====== UI ====== */
 function setTime(t) {
   selectedTime = t;
   ["t5","t15","t30"].forEach(id =>
@@ -164,6 +170,9 @@ function setTime(t) {
 async function render() {
   const state = await getState();
   hideAll();
+
+  document.getElementById("header").classList.remove("hidden");
+  document.getElementById("subtitle").classList.remove("hidden");
 
   if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
     lastAutoDecided = true;
@@ -200,6 +209,7 @@ async function render() {
   }
 }
 
+/* ====== ACTIONS ====== */
 async function decide() {
   if (!selectedTime) {
     alert("Wybierz czas na START.");
@@ -268,11 +278,18 @@ async function reset() {
   render();
 }
 
+/* 🌙 FINAL SLEEP */
 function sleep() {
   hideAll();
+  document.getElementById("subtitle").classList.add("hidden");
   sleepBox.classList.remove("hidden");
+
+  setTimeout(() => {
+    document.body.classList.add("fade-out");
+  }, 5500);
 }
 
+/* ====== START ====== */
 render();
 </script>
 
