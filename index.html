@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>NOW</title>
+<meta charset="UTF-8" />
+<title>NOW</title>
 
-  <link rel="manifest" href="/manifest.json">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="NOW">
-  <meta name="theme-color" content="#0b0b0b">
+<link rel="manifest" href="/manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="NOW">
+<meta name="theme-color" content="#0b0b0b">
 
 <style>
 body {
@@ -60,6 +60,15 @@ button {
   font-size: 18px;
   line-height: 1.4;
 }
+
+/* DONE ANIMATION */
+.fade-up {
+  animation: fadeUp 0.45s ease-out forwards;
+}
+@keyframes fadeUp {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
+}
 </style>
 </head>
 
@@ -70,7 +79,8 @@ button {
   <p id="subtitle">Jedna linia = jedno zadanie</p>
 </div>
 
-<div id="idleBox" class="box">
+<!-- IDLE -->
+<div id="idleBox" class="box hidden">
   <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
 
   <div class="time">
@@ -83,6 +93,7 @@ button {
   <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
 </div>
 
+<!-- DECIDED -->
 <div id="decidedBox" class="box hidden">
   <p id="decideText" class="final"></p>
   <p id="decidedTask"></p>
@@ -90,12 +101,14 @@ button {
   <button class="gray" onclick="skipTask()">NIE TERAZ</button>
 </div>
 
+<!-- DOING -->
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
   <button class="green" onclick="doneTask()">ZROBIONE</button>
 </div>
 
+<!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
   <p>Chaos zniknął. Dobra robota.</p>
   <button class="gray" onclick="reset()">Nowy chaos</button>
@@ -105,12 +118,21 @@ button {
 const API = "https://now-production-9649.up.railway.app";
 
 let selectedTime = null;
+let hasDoneAnything = false;
 let lastAutoDecided = false;
 
+/* ===== UTILS ===== */
 function hideAll() {
   document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
 }
 
+/* ===== STATE ===== */
+async function getState() {
+  const res = await fetch(API + "/state", { cache: "no-store" });
+  return res.json();
+}
+
+/* ===== UI ===== */
 function setTime(t) {
   selectedTime = t;
   ["t5","t15","t30"].forEach(id =>
@@ -119,38 +141,55 @@ function setTime(t) {
   document.getElementById("t"+t).classList.add("active");
 }
 
-async function getStateSafe() {
-  try {
-    const res = await fetch(API + "/state", { cache: "no-store" });
-    return await res.json();
-  } catch {
-    return null;
-  }
-}
-
 async function render() {
-  hideAll();
-  idleBox.classList.remove("hidden");
+  let state;
+  try {
+    state = await getState();
+  } catch {
+    idleBox.classList.remove("hidden");
+    return;
+  }
 
-  const state = await getStateSafe();
-  if (!state) return;
+  hideAll();
+  header.classList.remove("hidden");
+  subtitle.classList.remove("hidden");
+
+  if (state.status === "IDLE") {
+    idleBox.classList.remove("hidden");
+    chaosInput.value = state.chaos.join("\n");
+    return;
+  }
 
   if (state.status === "DECIDED") {
-    hideAll();
     decidedTask.innerText = state.currentTask;
-    decideText.innerText = "To jest najlepszy ruch TERAZ.";
+    decideText.innerHTML = "To jest najlepszy ruch TERAZ.";
     decidedBox.classList.remove("hidden");
+    return;
   }
 
   if (state.status === "DOING") {
-    hideAll();
     doingTask.innerText = state.currentTask;
     doingBox.classList.remove("hidden");
   }
 }
 
+/* ===== ACTIONS ===== */
 async function decide() {
-  if (!selectedTime) return alert("Wybierz czas.");
+  if (!selectedTime) return alert("Wybierz czas na START.");
+
+  const state = await getState();
+
+  if (state.chaos.length === 0) {
+    const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
+    if (!tasks.length) return;
+
+    await fetch(API + "/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks })
+    });
+  }
+
   await fetch(API + "/decide", { method: "POST" });
   render();
 }
@@ -161,7 +200,18 @@ async function startTask() {
 }
 
 async function doneTask() {
-  await fetch(API + "/done", { method: "POST" });
+  doingTask.classList.add("fade-up");
+  setTimeout(async () => {
+    await fetch(API + "/done", { method: "POST" });
+    hasDoneAnything = true;
+    selectedTime = null;
+    doingTask.classList.remove("fade-up");
+    render();
+  }, 450);
+}
+
+async function skipTask() {
+  await fetch(API + "/later", { method: "POST" });
   render();
 }
 
@@ -174,6 +224,7 @@ async function reset() {
   render();
 }
 
+/* ===== START ===== */
 render();
 </script>
 
