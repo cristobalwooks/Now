@@ -13,8 +13,12 @@ const __dirname = path.dirname(__filename);
 app.use(cors());
 app.use(express.json());
 
-// 👉 KLUCZOWA LINIJKA (PWA)
-app.use(express.static(path.join(__dirname, "public")));
+// 🔑 KLUCZOWE: serwujemy CAŁY katalog główny jako static
+// dzięki temu dostępne są:
+// /index.html
+// /manifest.json
+// /sw.js
+app.use(express.static(__dirname));
 
 // ====== STAN APLIKACJI ======
 let chaos = [];
@@ -35,11 +39,7 @@ function decideNowTask(tasks) {
   return available[0] || tasks[0];
 }
 
-// ====== ROUTES ======
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+// ====== ROUTES API ======
 
 app.get("/state", (req, res) => {
   res.json({
