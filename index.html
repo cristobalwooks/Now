@@ -15,8 +15,9 @@
 <style>
 body {
   background: #0b0b0b;
-  color: #f2f2f2;
-  font-family: Arial, sans-serif;
+  color: #e6e6e6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               Roboto, Inter, Helvetica, Arial, sans-serif;
   text-align: center;
   padding: 40px;
   transition: opacity 1.5s ease;
@@ -33,6 +34,16 @@ textarea {
   box-sizing: border-box;
   margin: 0 auto;
   display: block;
+  background: #111;
+  color: #e6e6e6;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 14px;
+}
+
+textarea::placeholder {
+  color: #666;
 }
 
 button {
@@ -40,37 +51,50 @@ button {
   padding: 12px 18px;
   font-size: 15px;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
 }
 
 .red { background: #e53935; color: white; }
 .green { background: #2ecc71; color: black; }
-.gray { background: #444; color: white; }
+.gray { background: #444; color: #eee; }
 
 .box {
-  margin-top: 20px;
-  padding: 20px;
-  border: 1px solid #333;
+  margin-top: 28px;
+  padding: 24px;
 }
 
 .hidden { display: none; }
 
-.time button { opacity: 0.4; }
+.time {
+  margin-top: 20px;
+}
+
+.time button {
+  opacity: 0.35;
+}
+
 .time button.active {
   opacity: 1;
-  border: 2px solid white;
 }
 
 .final {
   font-size: 18px;
-  line-height: 1.4;
+  line-height: 1.5;
+}
+
+.divider {
+  width: 36px;
+  height: 1px;
+  margin: 12px auto 24px;
+  background: rgba(255,255,255,0.15);
 }
 
 /* ✨ ZROBIONE */
 .fade-up {
   animation: fadeUp 0.45s ease-out forwards;
 }
+
 @keyframes fadeUp {
   from { opacity: 1; transform: translateY(0); filter: blur(0); }
   to { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
@@ -111,6 +135,7 @@ button {
 
 <div id="header">
   <h1>NOW</h1>
+  <div class="divider"></div>
   <p id="subtitle">Jedna linia = jedno zadanie</p>
 </div>
 
@@ -163,19 +188,17 @@ const API = "https://now-production-9649.up.railway.app";
 let selectedTime = null;
 let hasDoneAnything = false;
 let lastAutoDecided = false;
+let isSleeping = false;
 
-/* ====== UTILS ====== */
 function hideAll() {
   document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
 }
 
-/* ====== STATE ====== */
 async function getState() {
   const res = await fetch(API + "/state");
   return res.json();
 }
 
-/* ====== UI ====== */
 function setTime(t) {
   selectedTime = t;
   ["t5","t15","t30"].forEach(id =>
@@ -185,11 +208,13 @@ function setTime(t) {
 }
 
 async function render() {
+  if (isSleeping) return;
+
   const state = await getState();
   hideAll();
 
-  document.getElementById("header").classList.remove("hidden");
-  document.getElementById("subtitle").classList.remove("hidden");
+  header.classList.remove("hidden");
+  subtitle.classList.remove("hidden");
 
   if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
     lastAutoDecided = true;
@@ -226,7 +251,6 @@ async function render() {
   }
 }
 
-/* ====== ACTIONS ====== */
 async function decide() {
   if (!selectedTime) {
     alert("Wybierz czas na START.");
@@ -295,10 +319,10 @@ async function reset() {
   render();
 }
 
-/* 🌙 FINAL SLEEP */
 function sleep() {
+  isSleeping = true;
   hideAll();
-  document.getElementById("subtitle").classList.add("hidden");
+  subtitle.classList.add("hidden");
   sleepBox.classList.remove("hidden");
 
   setTimeout(() => {
@@ -306,7 +330,6 @@ function sleep() {
   }, 5500);
 }
 
-/* ====== START ====== */
 render();
 </script>
 
