@@ -1,1 +1,10 @@
+{
+  "name": "NOW",
+  "short_name": "NOW",
+  "description": "One decision. One move. Now.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b"
+}
 
