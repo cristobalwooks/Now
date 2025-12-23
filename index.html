@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-  <meta charset="UTF-8" />
-  <title>NOW</title>
-
   <link rel="manifest" href="/manifest.json">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="NOW">
   <meta name="theme-color" content="#0b0b0b">
 
+  <meta charset="UTF-8" />
+  <title>NOW</title>
+
 <style>
 body {
   background: #0b0b0b;
   color: #e6e6e6;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-               Roboto, Inter, Helvetica, Arial, sans-serif;
+               Roboto, Helvetica, Arial, sans-serif;
   text-align: center;
   padding: 40px;
   transition: opacity 1.5s ease;
 }
 
-body.fade-out {
-  opacity: 0;
-}
+body.fade-out { opacity: 0; }
 
 textarea {
   width: 100%;
@@ -35,15 +32,11 @@ textarea {
   margin: 0 auto;
   display: block;
   background: #111;
-  color: #e6e6e6;
+  color: #f2f2f2;
   border: none;
   border-radius: 10px;
   padding: 12px;
-  font-size: 14px;
-}
-
-textarea::placeholder {
-  color: #666;
+  font-size: 15px;
 }
 
 button {
@@ -51,13 +44,13 @@ button {
   padding: 12px 18px;
   font-size: 15px;
   border: none;
-  border-radius: 999px;
+  border-radius: 10px;
   cursor: pointer;
 }
 
-.red { background: #e53935; color: white; }
+.red   { background: #e53935; color: white; }
 .green { background: #2ecc71; color: black; }
-.gray { background: #444; color: #eee; }
+.gray  { background: #444; color: white; }
 
 .box {
   margin-top: 28px;
@@ -66,67 +59,54 @@ button {
 
 .hidden { display: none; }
 
-.time {
-  margin-top: 20px;
-}
-
-.time button {
-  opacity: 0.35;
-}
-
+.time button { opacity: 0.4; }
 .time button.active {
   opacity: 1;
+  border: 2px solid white;
 }
 
 .final {
   font-size: 18px;
-  line-height: 1.5;
-}
-
-.divider {
-  width: 36px;
-  height: 1px;
-  margin: 12px auto 24px;
-  background: rgba(255,255,255,0.15);
+  line-height: 1.4;
 }
 
 /* ✨ ZROBIONE */
 .fade-up {
   animation: fadeUp 0.45s ease-out forwards;
 }
-
 @keyframes fadeUp {
   from { opacity: 1; transform: translateY(0); filter: blur(0); }
-  to { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
+  to   { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
 }
 
 /* 🌙 SLEEP */
 .zzz {
-  font-size: 26px;
-  color: #6fd3ff;
-  letter-spacing: 10px;
-  margin-top: 20px;
-  animation: float 3s infinite ease-in-out;
+  font-size: 30px;
+  color: #4fc3f7;
+  letter-spacing: 8px;
+  animation: float 2s infinite ease-in-out;
 }
-
 @keyframes float {
-  0% { transform: translateY(0); opacity: .6; }
-  50% { transform: translateY(-12px); opacity: 1; }
+  0%   { transform: translateY(0); opacity: .6; }
+  50%  { transform: translateY(-10px); opacity: 1; }
   100% { transform: translateY(0); opacity: .6; }
 }
 
 .goodbye {
-  margin-top: 36px;
-  font-size: 15px;
-  color: #9a9a9a;
-  line-height: 1.5;
+  margin-top: 30px;
+  font-size: 13px;
+  color: #777;
   opacity: 0;
-  animation: fadeIn 1.8s ease forwards;
-  animation-delay: 3.2s;
+  animation: fadeIn 1.5s ease forwards;
+  animation-delay: 2.5s;
 }
+@keyframes fadeIn { to { opacity: 1; } }
 
-@keyframes fadeIn {
-  to { opacity: 1; }
+/* 👍 mikro-feedback */
+.done-mark {
+  font-size: 22px;
+  margin-left: 6px;
+  opacity: 0.85;
 }
 </style>
 </head>
@@ -135,13 +115,14 @@ button {
 
 <div id="header">
   <h1>NOW</h1>
-  <div class="divider"></div>
-  <p id="subtitle">Jedna linia = jedno zadanie</p>
 </div>
 
 <!-- IDLE -->
 <div id="idleBox" class="box hidden">
   <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
+  <p style="margin-top:8px;font-size:13px;color:#777;">
+    Jedna linia = jedno zadanie
+  </p>
 
   <div class="time">
     <p>Ile masz czasu na START?</p>
@@ -165,7 +146,9 @@ button {
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
-  <button class="green" onclick="doneTask()">ZROBIONE</button>
+  <button class="green" onclick="doneTask()">
+    ZROBIONE <span class="done-mark">👍</span>
+  </button>
 </div>
 
 <!-- EMPTY -->
@@ -177,7 +160,6 @@ button {
 
 <!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
-  <div style="margin-top: 40px;"></div>
   <div class="zzz">z z z z z z</div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
@@ -188,17 +170,32 @@ const API = "https://now-production-9649.up.railway.app";
 let selectedTime = null;
 let hasDoneAnything = false;
 let lastAutoDecided = false;
-let isSleeping = false;
 
+/* ====== SOUND (tap) ====== */
+function playTap() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = "sine";
+  o.frequency.value = 220;
+  g.gain.value = 0.08;
+  o.connect(g).connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + 0.12);
+}
+
+/* ====== UTILS ====== */
 function hideAll() {
   document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
 }
 
+/* ====== STATE ====== */
 async function getState() {
   const res = await fetch(API + "/state");
   return res.json();
 }
 
+/* ====== UI ====== */
 function setTime(t) {
   selectedTime = t;
   ["t5","t15","t30"].forEach(id =>
@@ -208,13 +205,8 @@ function setTime(t) {
 }
 
 async function render() {
-  if (isSleeping) return;
-
   const state = await getState();
   hideAll();
-
-  header.classList.remove("hidden");
-  subtitle.classList.remove("hidden");
 
   if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
     lastAutoDecided = true;
@@ -224,12 +216,10 @@ async function render() {
 
   if (state.status === "IDLE") {
     lastAutoDecided = false;
-
     if (state.chaos.length === 0) {
       (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
       return;
     }
-
     chaosInput.value = state.chaos.join("\n");
     idleBox.classList.remove("hidden");
     return;
@@ -251,6 +241,7 @@ async function render() {
   }
 }
 
+/* ====== ACTIONS ====== */
 async function decide() {
   if (!selectedTime) {
     alert("Wybierz czas na START.");
@@ -258,11 +249,9 @@ async function decide() {
   }
 
   const state = await getState();
-
   if (state.chaos.length === 0) {
     const tasks = chaosInput.value.split("\n").map(t => t.trim()).filter(Boolean);
     if (!tasks.length) return;
-
     await fetch(API + "/tasks", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -280,6 +269,7 @@ async function startTask() {
 }
 
 async function doneTask() {
+  playTap();
   const el = document.getElementById("doingTask");
   el.classList.add("fade-up");
 
@@ -294,12 +284,10 @@ async function doneTask() {
 
 async function skipTask() {
   const state = await getState();
-
   if (state.chaos.length === 1) {
     sleep();
     return;
   }
-
   await fetch(API + "/later", { method: "POST" });
   selectedTime = null;
   lastAutoDecided = false;
@@ -319,17 +307,16 @@ async function reset() {
   render();
 }
 
+/* 🌙 FINAL SLEEP */
 function sleep() {
-  isSleeping = true;
   hideAll();
-  subtitle.classList.add("hidden");
   sleepBox.classList.remove("hidden");
-
   setTimeout(() => {
     document.body.classList.add("fade-out");
-  }, 5500);
+  }, 5000);
 }
 
+/* ====== START ====== */
 render();
 </script>
 
