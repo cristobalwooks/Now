@@ -3,42 +3,24 @@
 <head>
   <link rel="manifest" href="/manifest.json">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="NOW">
-  <meta name="theme-color" content="#0b0b0b">
   <meta charset="UTF-8" />
   <title>NOW</title>
 
 <style>
-/* ===== BASE ===== */
 body {
-  background: linear-gradient(
-    180deg,
-    #111827 0%,
-    #0e1624 40%,
-    #0b0b0b 100%
-  );
+  background: linear-gradient(180deg,#111827 0%,#0e1624 40%,#0b0b0b 100%);
   min-height: 100vh;
   color: #eaeaea;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
-               Roboto, Helvetica, Arial, sans-serif;
+  font-family: Arial, sans-serif;
   text-align: center;
   padding: 40px;
   transition: opacity 1.5s ease;
 }
-body.fade-out {
-  opacity: 0;
-}
+body.fade-out { opacity: 0; }
 
 .hidden { display: none; }
+.box { margin-top: 28px; padding: 24px; }
 
-.box {
-  margin-top: 28px;
-  padding: 24px;
-}
-
-/* ===== INTRO ===== */
 #intro {
   position: fixed;
   inset: 0;
@@ -52,15 +34,8 @@ body.fade-out {
   font-size: 42px;
   letter-spacing: 4px;
   opacity: 0;
-  transform: scale(0.96);
+  transform: scale(.96);
   transition: opacity 1.2s ease, transform 1.2s ease;
-}
-
-/* ===== INPUT ===== */
-.instruction {
-  font-size: 14px;
-  color: #ccc;
-  margin-bottom: 6px;
 }
 
 textarea {
@@ -74,318 +49,156 @@ textarea {
   border: 1px solid #222;
   border-radius: 12px;
   padding: 14px;
-  font-size: 15px;
 }
 
-/* ===== BUTTONS ===== */
 button {
   margin: 10px 8px;
   padding: 14px 20px;
-  font-size: 15px;
-  border: none;
   border-radius: 14px;
+  border: none;
   cursor: pointer;
 }
 
-.red {
-  background: #e53935;
-  color: #fff;
-}
-.green {
-  background: #2ecc71;
-  color: #081a0f;
-  font-weight: 600;
-}
-.gray {
-  background: #3a3a3a;
-  color: #ddd;
-}
-.rest {
-  background: #1e3a5f;
-  color: #e8f2ff;
-}
+.red { background:#e53935; color:#fff; }
+.green { background:#2ecc71; color:#081a0f; }
+.gray { background:#3a3a3a; color:#ddd; }
+.rest { background:#1e3a5f; color:#e8f2ff; }
 
-/* ===== TIME ===== */
-.time button { opacity: 0.4; }
-.time button.active {
-  opacity: 1;
-  border: 2px solid #fff;
-}
-
-/* ===== TEXT ===== */
-.final {
-  font-size: 18px;
-  line-height: 1.4;
-}
-
-/* ===== DONE ANIMATION ===== */
 .fade-up {
   animation: fadeUp .75s ease-out forwards;
 }
 @keyframes fadeUp {
-  from { opacity: 1; transform: translateY(0); filter: blur(0); }
-  to   { opacity: 0; transform: translateY(-24px); filter: blur(4px); }
+  from { opacity:1; transform:translateY(0); }
+  to { opacity:0; transform:translateY(-24px); }
 }
 
-/* ===== SLEEP ===== */
-.zzz {
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 12px;
-}
 .zzz span {
   font-size: 18px;
   color: #4fc3f7;
-  opacity: .8;
   animation: wave 2.4s infinite ease-in-out;
 }
 @keyframes wave {
-  0% { transform: translateY(0); opacity: .4; }
-  50% { transform: translateY(-6px); opacity: 1; }
-  100% { transform: translateY(0); opacity: .4; }
+  0%{opacity:.4}50%{opacity:1}100%{opacity:.4}
 }
-
 .goodbye {
-  margin-top: 28px;
+  margin-top: 20px;
   font-size: 13px;
   color: #777;
   opacity: 0;
   animation: fadeIn 1.5s ease forwards;
   animation-delay: 2.5s;
 }
-@keyframes fadeIn {
-  to { opacity: 1; }
-}
+@keyframes fadeIn { to{opacity:1} }
 </style>
 </head>
 
 <body>
 
-<!-- INTRO -->
-<div id="intro">
-  <h1>NOW</h1>
-</div>
+<div id="intro"><h1>NOW</h1></div>
 
-<div id="header">
-  <h1>NOW</h1>
-</div>
+<h1>NOW</h1>
 
-<!-- IDLE -->
 <div id="idleBox" class="box hidden">
-  <div class="instruction">Jedna linia = jedno zadanie</div>
-  <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
-
-  <div class="time">
-    <p>Ile masz czasu na START?</p>
-    <button id="t5" onclick="setTime('5')">5 min</button>
-    <button id="t15" onclick="setTime('15')">15 min</button>
-    <button id="t30" onclick="setTime('30')">30+ min</button>
-  </div>
-
+  <p>Jedna linia = jedno zadanie</p>
+  <textarea id="chaosInput"></textarea>
   <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
 </div>
 
-<!-- DECIDED -->
 <div id="decidedBox" class="box hidden">
-  <p id="decideText" class="final"></p>
   <p id="decidedTask"></p>
   <button class="green" onclick="startTask()">ZACZĄŁEM</button>
-  <button class="gray" onclick="skipTask()">NIE TERAZ</button>
 </div>
 
-<!-- DOING -->
 <div id="doingBox" class="box hidden">
-  <h2>ROBISZ</h2>
   <p id="doingTask"></p>
-  <button class="green" onclick="doneTask()">ZROBIONE 👍</button>
+  <button class="green" onclick="doneTask()">ZROBIONE</button>
 </div>
 
-<!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
-  <p>Chaos zniknął. Dobra robota.</p>
   <button class="rest" onclick="sleep()">Odpoczywam</button>
-  <button class="red" onclick="reset()">Nowy chaos</button>
 </div>
 
-<!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
   <div class="zzz">
-    <span>z</span><span>z</span><span>z</span><span>z</span><span>z</span><span>z</span>
+    <span>z</span><span>z</span><span>z</span><span>z</span>
   </div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
 
 <script>
-/* ===== INTRO (ZA KAŻDYM WEJŚCIEM) ===== */
-(function(){
+/* INTRO */
+(() => {
   const intro = document.getElementById("intro");
-  const title = intro.querySelector("h1");
-
+  const h1 = intro.querySelector("h1");
   requestAnimationFrame(() => {
-    title.style.opacity = "1";
-    title.style.transform = "scale(1)";
+    h1.style.opacity = 1;
+    h1.style.transform = "scale(1)";
   });
-
-  setTimeout(() => {
-    intro.remove();
-  }, 1400);
+  setTimeout(() => intro.remove(), 1400);
 })();
 
-/* ===== SOUND ===== */
+/* AUDIO – STARA, DZIAŁAJĄCA METODA */
 const doneSound = new Audio("/plum.mp3");
-doneSound.volume = 0.35;
+doneSound.volume = 0.4;
 
-/* ===== BACKEND ===== */
+/* BACKEND */
 const API = "https://now-production-9649.up.railway.app";
 
-let selectedTime = null;
-let hasDoneAnything = false;
-let lastAutoDecided = false;
-
-/* ===== CORE ===== */
-function hideAll() {
-  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
+async function getState(){
+  return (await fetch(API+"/state")).json();
 }
 
-async function getState() {
-  const res = await fetch(API + "/state");
-  return res.json();
+function hideAll(){
+  document.querySelectorAll(".box").forEach(b=>b.classList.add("hidden"));
 }
 
-function setTime(t) {
-  selectedTime = t;
-  ["t5","t15","t30"].forEach(id =>
-    document.getElementById(id).classList.remove("active")
-  );
-  document.getElementById("t"+t).classList.add("active");
-}
-
-async function render() {
+async function render(){
   const state = await getState();
   hideAll();
 
-  if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
-    lastAutoDecided = true;
-    await fetch(API + "/decide", { method: "POST" });
-    return render();
-  }
-
-  if (state.status === "IDLE") {
-    lastAutoDecided = false;
-
-    if (state.chaos.length === 0) {
-      (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
-      return;
-    }
-
-    chaosInput.value = state.chaos.join("\n");
+  if(state.status==="IDLE"){
     idleBox.classList.remove("hidden");
-    return;
   }
-
-  if (state.status === "DECIDED") {
+  if(state.status==="DECIDED"){
     decidedTask.innerText = state.currentTask;
-    decideText.innerHTML =
-      state.chaos.length === 1
-        ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
-        : "To jest najlepszy ruch TERAZ.";
     decidedBox.classList.remove("hidden");
-    return;
   }
-
-  if (state.status === "DOING") {
+  if(state.status==="DOING"){
     doingTask.innerText = state.currentTask;
     doingBox.classList.remove("hidden");
   }
 }
 
-/* ===== ACTIONS ===== */
-async function decide() {
-  if (!selectedTime) {
-    alert("Wybierz czas na START.");
-    return;
-  }
-
-  const state = await getState();
-
-  if (state.chaos.length === 0) {
-    const tasks = chaosInput.value
-      .split("\n")
-      .map(t => t.trim())
-      .filter(Boolean);
-
-    if (!tasks.length) return;
-
-    await fetch(API + "/tasks", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tasks })
-    });
-  }
-
-  await fetch(API + "/decide", { method: "POST" });
+async function decide(){
+  const tasks = chaosInput.value.split("\n").filter(Boolean);
+  await fetch(API+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tasks})});
+  await fetch(API+"/decide",{method:"POST"});
   render();
 }
 
-async function startTask() {
-  await fetch(API + "/start", { method: "POST" });
+async function startTask(){
+  await fetch(API+"/start",{method:"POST"});
   render();
 }
 
-async function doneTask() {
+async function doneTask(){
   doneSound.currentTime = 0;
   doneSound.play();
 
   doingTask.classList.add("fade-up");
-
-  setTimeout(async () => {
-    await fetch(API + "/done", { method: "POST" });
-    hasDoneAnything = true;
-    selectedTime = null;
+  setTimeout(async()=>{
+    await fetch(API+"/done",{method:"POST"});
     doingTask.classList.remove("fade-up");
     render();
-  }, 750);
+  },750);
 }
 
-async function skipTask() {
-  const state = await getState();
-
-  if (state.chaos.length === 1) {
-    sleep();
-    return;
-  }
-
-  await fetch(API + "/later", { method: "POST" });
-  selectedTime = null;
-  lastAutoDecided = false;
-  render();
-}
-
-async function reset() {
-  await fetch(API + "/tasks", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ tasks: [] })
-  });
-  chaosInput.value = "";
-  hasDoneAnything = false;
-  selectedTime = null;
-  lastAutoDecided = false;
-  render();
-}
-
-/* ===== SLEEP (OUTRO + WYJŚCIE) ===== */
-function sleep() {
+function sleep(){
   hideAll();
   sleepBox.classList.remove("hidden");
-
-  setTimeout(() => {
-    document.body.classList.add("fade-out");
-  }, 5000);
+  setTimeout(()=>document.body.classList.add("fade-out"),5000);
 }
 
-/* ===== START ===== */
 render();
 </script>
 
