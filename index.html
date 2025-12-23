@@ -224,15 +224,21 @@ let selectedTime=null, hasDoneAnything=false, lastAutoDecided=false;
 
 /* ===== INTRO LOGIC ===== */
 (function(){
+  const intro = document.getElementById("intro");
   const today = new Date().toDateString();
   const last = localStorage.getItem("now_intro_day");
+
   if (last !== today) {
-    const intro = document.getElementById("intro");
     intro.classList.remove("hidden");
-    setTimeout(()=>intro.classList.add("hide"),1200);
-    setTimeout(()=>intro.remove(),1600);
+    setTimeout(() => intro.classList.add("hide"), 1200);
+    setTimeout(() => intro.remove(), 1600);
     localStorage.setItem("now_intro_day", today);
+  } else {
+    // jeśli intro nie ma się pokazać — USUWAMY JE OD RAZU
+    intro.remove();
   }
+})();
+
 })();
 
 /* ===== CORE ===== */
@@ -324,3 +330,4 @@ render();
 
 </body>
 </html>
+
