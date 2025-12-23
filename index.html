@@ -11,6 +11,7 @@
   <title>NOW</title>
 
 <style>
+/* ===== BASE ===== */
 body {
   background: linear-gradient(
     180deg,
@@ -24,8 +25,38 @@ body {
                Roboto, Helvetica, Arial, sans-serif;
   text-align: center;
   padding: 40px;
+  transition: opacity 1.5s ease;
+}
+body.fade-out {
+  opacity: 0;
 }
 
+.hidden { display: none; }
+
+.box {
+  margin-top: 28px;
+  padding: 24px;
+}
+
+/* ===== INTRO ===== */
+#intro {
+  position: fixed;
+  inset: 0;
+  background: #0b0b0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+#intro h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
+
+/* ===== INPUT ===== */
 .instruction {
   font-size: 14px;
   color: #ccc;
@@ -46,6 +77,7 @@ textarea {
   font-size: 15px;
 }
 
+/* ===== BUTTONS ===== */
 button {
   margin: 10px 8px;
   padding: 14px 20px;
@@ -57,48 +89,36 @@ button {
 
 .red {
   background: #e53935;
-  color: white;
+  color: #fff;
 }
-
 .green {
   background: #2ecc71;
   color: #081a0f;
   font-weight: 600;
 }
-
 .gray {
   background: #3a3a3a;
   color: #ddd;
 }
-
 .rest {
   background: #1e3a5f;
   color: #e8f2ff;
 }
 
-.box {
-  margin-top: 28px;
-  padding: 24px;
-}
-
-.hidden {
-  display: none;
-}
-
-.time button {
-  opacity: 0.4;
-}
+/* ===== TIME ===== */
+.time button { opacity: 0.4; }
 .time button.active {
   opacity: 1;
-  border: 2px solid white;
+  border: 2px solid #fff;
 }
 
+/* ===== TEXT ===== */
 .final {
   font-size: 18px;
   line-height: 1.4;
 }
 
-/* spokojniejsze ZROBIONE */
+/* ===== DONE ANIMATION ===== */
 .fade-up {
   animation: fadeUp .75s ease-out forwards;
 }
@@ -107,7 +127,7 @@ button {
   to   { opacity: 0; transform: translateY(-24px); filter: blur(4px); }
 }
 
-/* SLEEP */
+/* ===== SLEEP ===== */
 .zzz {
   display: flex;
   justify-content: center;
@@ -121,10 +141,11 @@ button {
   animation: wave 2.4s infinite ease-in-out;
 }
 @keyframes wave {
-  0%{transform:translateY(0);opacity:.4;}
-  50%{transform:translateY(-6px);opacity:1;}
-  100%{transform:translateY(0);opacity:.4;}
+  0% { transform: translateY(0); opacity: .4; }
+  50% { transform: translateY(-6px); opacity: 1; }
+  100% { transform: translateY(0); opacity: .4; }
 }
+
 .goodbye {
   margin-top: 28px;
   font-size: 13px;
@@ -133,24 +154,8 @@ button {
   animation: fadeIn 1.5s ease forwards;
   animation-delay: 2.5s;
 }
-@keyframes fadeIn { to { opacity: 1; } }
-
-/* INTRO */
-#intro {
-  position: fixed;
-  inset: 0;
-  background: #0b0b0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-#intro h1 {
-  font-size: 42px;
-  letter-spacing: 4px;
-  opacity: 0;
-  transform: scale(0.96);
-  transition: opacity 1.2s ease, transform 1.2s ease;
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 </style>
 </head>
@@ -162,7 +167,9 @@ button {
   <h1>NOW</h1>
 </div>
 
-<div id="header"><h1>NOW</h1></div>
+<div id="header">
+  <h1>NOW</h1>
+</div>
 
 <!-- IDLE -->
 <div id="idleBox" class="box hidden">
@@ -210,135 +217,175 @@ button {
 </div>
 
 <script>
-const API = "https://now-production-9649.up.railway.app";
-
-let selectedTime=null;
-let hasDoneAnything=false;
-let lastAutoDecided=false;
-
-/* INTRO – ZAWSZE DZIAŁA */
+/* ===== INTRO (ZA KAŻDYM WEJŚCIEM) ===== */
 (function(){
   const intro = document.getElementById("intro");
   const title = intro.querySelector("h1");
 
-  requestAnimationFrame(()=>{
+  requestAnimationFrame(() => {
     title.style.opacity = "1";
     title.style.transform = "scale(1)";
   });
 
-  setTimeout(()=>{
+  setTimeout(() => {
     intro.remove();
-  },1400);
+  }, 1400);
 })();
 
-/* CORE */
-function hideAll(){
-  document.querySelectorAll(".box").forEach(b=>b.classList.add("hidden"));
+/* ===== SOUND ===== */
+const doneSound = new Audio("/plum.mp3");
+doneSound.volume = 0.35;
+
+/* ===== BACKEND ===== */
+const API = "https://now-production-9649.up.railway.app";
+
+let selectedTime = null;
+let hasDoneAnything = false;
+let lastAutoDecided = false;
+
+/* ===== CORE ===== */
+function hideAll() {
+  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
 }
-async function getState(){
+
+async function getState() {
   const res = await fetch(API + "/state");
   return res.json();
 }
-function setTime(t){
-  selectedTime=t;
-  ["t5","t15","t30"].forEach(id=>document.getElementById(id).classList.remove("active"));
+
+function setTime(t) {
+  selectedTime = t;
+  ["t5","t15","t30"].forEach(id =>
+    document.getElementById(id).classList.remove("active")
+  );
   document.getElementById("t"+t).classList.add("active");
 }
 
-async function render(){
+async function render() {
   const state = await getState();
   hideAll();
 
-  if(state.status==="IDLE" && state.chaos.length===1 && !lastAutoDecided){
-    lastAutoDecided=true;
-    await fetch(API+"/decide",{method:"POST"});
+  if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
+    lastAutoDecided = true;
+    await fetch(API + "/decide", { method: "POST" });
     return render();
   }
 
-  if(state.status==="IDLE"){
-    lastAutoDecided=false;
-    if(state.chaos.length===0){
-      (hasDoneAnything?emptyBox:idleBox).classList.remove("hidden");
+  if (state.status === "IDLE") {
+    lastAutoDecided = false;
+
+    if (state.chaos.length === 0) {
+      (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
       return;
     }
+
     chaosInput.value = state.chaos.join("\n");
     idleBox.classList.remove("hidden");
+    return;
   }
 
-  if(state.status==="DECIDED"){
+  if (state.status === "DECIDED") {
     decidedTask.innerText = state.currentTask;
     decideText.innerHTML =
-      state.chaos.length===1
-      ?"Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
-      :"To jest najlepszy ruch TERAZ.";
+      state.chaos.length === 1
+        ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
+        : "To jest najlepszy ruch TERAZ.";
     decidedBox.classList.remove("hidden");
+    return;
   }
 
-  if(state.status==="DOING"){
+  if (state.status === "DOING") {
     doingTask.innerText = state.currentTask;
     doingBox.classList.remove("hidden");
   }
 }
 
-async function decide(){
-  if(!selectedTime) return alert("Wybierz czas na START.");
+/* ===== ACTIONS ===== */
+async function decide() {
+  if (!selectedTime) {
+    alert("Wybierz czas na START.");
+    return;
+  }
+
   const state = await getState();
-  if(state.chaos.length===0){
-    const tasks = chaosInput.value.split("\n").map(t=>t.trim()).filter(Boolean);
-    if(!tasks.length) return;
-    await fetch(API+"/tasks",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({tasks})
+
+  if (state.chaos.length === 0) {
+    const tasks = chaosInput.value
+      .split("\n")
+      .map(t => t.trim())
+      .filter(Boolean);
+
+    if (!tasks.length) return;
+
+    await fetch(API + "/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks })
     });
   }
-  await fetch(API+"/decide",{method:"POST"});
+
+  await fetch(API + "/decide", { method: "POST" });
   render();
 }
 
-async function startTask(){
-  await fetch(API+"/start",{method:"POST"});
+async function startTask() {
+  await fetch(API + "/start", { method: "POST" });
   render();
 }
 
-async function doneTask(){
+async function doneTask() {
+  doneSound.currentTime = 0;
+  doneSound.play();
+
   doingTask.classList.add("fade-up");
-  setTimeout(async()=>{
-    await fetch(API+"/done",{method:"POST"});
-    hasDoneAnything=true;
-    selectedTime=null;
+
+  setTimeout(async () => {
+    await fetch(API + "/done", { method: "POST" });
+    hasDoneAnything = true;
+    selectedTime = null;
     doingTask.classList.remove("fade-up");
     render();
-  },750);
+  }, 750);
 }
 
-async function skipTask(){
+async function skipTask() {
   const state = await getState();
-  if(state.chaos.length===1) return sleep();
-  await fetch(API+"/later",{method:"POST"});
-  selectedTime=null;
-  lastAutoDecided=false;
+
+  if (state.chaos.length === 1) {
+    sleep();
+    return;
+  }
+
+  await fetch(API + "/later", { method: "POST" });
+  selectedTime = null;
+  lastAutoDecided = false;
   render();
 }
 
-async function reset(){
-  await fetch(API+"/tasks",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({tasks:[]})
+async function reset() {
+  await fetch(API + "/tasks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tasks: [] })
   });
-  chaosInput.value="";
-  hasDoneAnything=false;
-  selectedTime=null;
-  lastAutoDecided=false;
+  chaosInput.value = "";
+  hasDoneAnything = false;
+  selectedTime = null;
+  lastAutoDecided = false;
   render();
 }
 
-function sleep(){
+/* ===== SLEEP (OUTRO + WYJŚCIE) ===== */
+function sleep() {
   hideAll();
   sleepBox.classList.remove("hidden");
+
+  setTimeout(() => {
+    document.body.classList.add("fade-out");
+  }, 5000);
 }
 
+/* ===== START ===== */
 render();
 </script>
 
