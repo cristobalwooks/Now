@@ -187,28 +187,33 @@ let lastAutoDecided = false;
 
 function playTap() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const now = ctx.currentTime;
 
-  const bufferSize = ctx.sampleRate * 0.12;
-  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-  const data = buffer.getChannelData(0);
+  // krótki impuls (kontakt)
+  const click = ctx.createOscillator();
+  const clickGain = ctx.createGain();
+  click.frequency.setValueAtTime(900, now);
+  clickGain.gain.setValueAtTime(0.05, now);
+  clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+  click.connect(clickGain).connect(ctx.destination);
+  click.start(now);
+  click.stop(now + 0.015);
 
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-  }
+  // ciało kropelki (niski, miękki „plum”)
+  const body = ctx.createOscillator();
+  const bodyGain = ctx.createGain();
+  body.type = "sine";
+  body.frequency.setValueAtTime(180, now);
+  body.frequency.exponentialRampToValueAtTime(90, now + 0.08);
 
-  const noise = ctx.createBufferSource();
-  noise.buffer = buffer;
+  bodyGain.gain.setValueAtTime(0.12, now);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
-  const filter = ctx.createBiquadFilter();
-  filter.type = "lowpass";
-  filter.frequency.value = 700;
-
-  const gain = ctx.createGain();
-  gain.gain.value = 0.12;
-
-  noise.connect(filter).connect(gain).connect(ctx.destination);
-  noise.start();
+  body.connect(bodyGain).connect(ctx.destination);
+  body.start(now);
+  body.stop(now + 0.1);
 }
+
 
 
 function hideAll() {
@@ -343,3 +348,4 @@ render();
 
 </body>
 </html>
+
