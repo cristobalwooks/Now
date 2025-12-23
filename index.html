@@ -32,23 +32,47 @@ textarea {
   background: #111;
   color: #f2f2f2;
   border: none;
-  border-radius: 10px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 14px;
   font-size: 15px;
 }
 
 button {
-  margin: 8px;
-  padding: 12px 18px;
+  margin: 10px 8px;
+  padding: 14px 20px;
   font-size: 15px;
   border: none;
-  border-radius: 10px;
+  border-radius: 14px;
   cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
 }
 
-.red { background: #e53935; color: white; }
-.green { background: #2ecc71; color: black; }
-.gray { background: #444; color: white; }
+/* ===== BUTTON TYPES ===== */
+
+.primary {
+  background: #2ecc71;
+  color: #081a0f;
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(46,204,113,0.25);
+}
+
+.primary:active {
+  transform: translateY(1px);
+  box-shadow: 0 3px 8px rgba(46,204,113,0.25);
+}
+
+.secondary {
+  background: #3a3a3a;
+  color: #f2f2f2;
+}
+
+.ghost {
+  background: transparent;
+  color: #aaa;
+  box-shadow: none;
+}
+
+/* ===== LAYOUT ===== */
 
 .box {
   margin-top: 28px;
@@ -60,7 +84,15 @@ button {
 .time button { opacity: 0.4; }
 .time button.active {
   opacity: 1;
-  border: 2px solid white;
+  border: 2px solid #f2f2f2;
+}
+
+/* ===== TEXT ===== */
+
+.helper {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #777;
 }
 
 .final {
@@ -68,7 +100,8 @@ button {
   line-height: 1.4;
 }
 
-/* ✨ ZROBIONE */
+/* ===== DONE ANIMATION ===== */
+
 .fade-up {
   animation: fadeUp 0.45s ease-out forwards;
 }
@@ -77,12 +110,13 @@ button {
   to   { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
 }
 
-/* 🌙 SLEEP – ZZZ SINUS */
+/* ===== SLEEP ===== */
+
 .zzz {
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .zzz span {
@@ -116,9 +150,8 @@ button {
 @keyframes fadeIn { to { opacity: 1; } }
 
 .done-mark {
-  font-size: 22px;
+  font-size: 20px;
   margin-left: 6px;
-  opacity: 0.85;
 }
 </style>
 </head>
@@ -132,9 +165,7 @@ button {
 <!-- IDLE -->
 <div id="idleBox" class="box hidden">
   <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
-  <p style="margin-top:8px;font-size:13px;color:#777;">
-    Jedna linia = jedno zadanie
-  </p>
+  <div class="helper">Jedna linia = jedno zadanie</div>
 
   <div class="time">
     <p>Ile masz czasu na START?</p>
@@ -143,22 +174,22 @@ button {
     <button id="t30" onclick="setTime('30')">30+ min</button>
   </div>
 
-  <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
+  <button class="secondary" onclick="decide()">ZDECYDUJ ZA MNIE</button>
 </div>
 
 <!-- DECIDED -->
 <div id="decidedBox" class="box hidden">
   <p id="decideText" class="final"></p>
   <p id="decidedTask"></p>
-  <button class="green" onclick="startTask()">ZACZĄŁEM</button>
-  <button class="gray" onclick="skipTask()">NIE TERAZ</button>
+  <button class="primary" onclick="startTask()">ZACZĄŁEM</button>
+  <button class="ghost" onclick="skipTask()">NIE TERAZ</button>
 </div>
 
 <!-- DOING -->
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
-  <button class="green" onclick="doneTask()">
+  <button class="secondary" onclick="doneTask()">
     ZROBIONE <span class="done-mark">👍</span>
   </button>
 </div>
@@ -166,8 +197,8 @@ button {
 <!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
   <p>Chaos zniknął. Dobra robota.</p>
-  <button class="gray" onclick="sleep()">Odpoczywam</button>
-  <button class="red" onclick="reset()">Nowy chaos</button>
+  <button class="ghost" onclick="sleep()">Odpoczywam</button>
+  <button class="secondary" onclick="reset()">Nowy chaos</button>
 </div>
 
 <!-- SLEEP -->
@@ -189,67 +220,26 @@ function playTap() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   const now = ctx.currentTime;
 
-  // 1. DELIKATNY POCZĄTEK (lekki "splish" przy kontakcie)
   const click = ctx.createOscillator();
   const clickGain = ctx.createGain();
-  click.type = "sine";
-  click.frequency.setValueAtTime(800, now); // delikatnie wyższy, mniej metaliczny
-  click.frequency.exponentialRampToValueAtTime(400, now + 0.03); // opadanie tonu
-  
-  clickGain.gain.setValueAtTime(0, now); // łagodny start
-  clickGain.gain.linearRampToValueAtTime(0.08, now + 0.005); // szybki ale nie nagły atak
-  clickGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06); // dłuższy zanik
-  
+  click.frequency.setValueAtTime(900, now);
+  clickGain.gain.setValueAtTime(0.05, now);
+  clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
   click.connect(clickGain).connect(ctx.destination);
   click.start(now);
-  click.stop(now + 0.08);
+  click.stop(now + 0.015);
 
-  // 2. CIAŁO KROPLI (miękkie "plum" z rezonansem)
   const body = ctx.createOscillator();
   const bodyGain = ctx.createGain();
-  const bodyFilter = ctx.createBiquadFilter(); // FILTR - kluczowe dla "wodnego" brzmienia
-  
   body.type = "sine";
-  body.frequency.setValueAtTime(250, now); // wyższy start
-  body.frequency.exponentialRampToValueAtTime(120, now + 0.15); // wolniejsze opadanie
-  
-  // Filtrowanie - usuwa "drewniany" charakter
-  bodyFilter.type = "lowpass";
-  bodyFilter.frequency.setValueAtTime(600, now);
-  bodyFilter.Q.value = 0.7; // łagodna rezonansowość
-  
-  bodyGain.gain.setValueAtTime(0, now);
-  bodyGain.gain.linearRampToValueAtTime(0.15, now + 0.01); // łagodny atak
-  bodyGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25); // DŁUGI zanik - jak rozchodzące się kręgi na wodzie
-  
-  // Połączenie z filtrem
-  body.connect(bodyFilter);
-  bodyFilter.connect(bodyGain);
-  bodyGain.connect(ctx.destination);
-  
+  body.frequency.setValueAtTime(180, now);
+  body.frequency.exponentialRampToValueAtTime(90, now + 0.08);
+  bodyGain.gain.setValueAtTime(0.12, now);
+  bodyGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+  body.connect(bodyGain).connect(ctx.destination);
   body.start(now);
-  body.stop(now + 0.3);
-
-  // 3. DODATKOWA WARSTWA (opcjonalnie - delikatne "bąbelki")
-  setTimeout(() => {
-    const bubble = ctx.createOscillator();
-    const bubbleGain = ctx.createGain();
-    
-    bubble.type = "sine";
-    bubble.frequency.setValueAtTime(300, now + 0.08);
-    bubble.frequency.exponentialRampToValueAtTime(150, now + 0.18);
-    
-    bubbleGain.gain.setValueAtTime(0, now + 0.08);
-    bubbleGain.gain.linearRampToValueAtTime(0.04, now + 0.09);
-    bubbleGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
-    
-    bubble.connect(bubbleGain).connect(ctx.destination);
-    bubble.start(now + 0.08);
-    bubble.stop(now + 0.25);
-  }, 0);
+  body.stop(now + 0.1);
 }
-
-
 
 function hideAll() {
   document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
@@ -383,5 +373,3 @@ render();
 
 </body>
 </html>
-
-
