@@ -24,40 +24,8 @@ body {
                Roboto, Helvetica, Arial, sans-serif;
   text-align: center;
   padding: 40px;
-  transition: opacity 1.5s ease;
-}
-body.fade-out { opacity: 0; }
-
-/* ===== INTRO ===== */
-#intro {
-  position: fixed;
-  inset: 0;
-  background: #0b0b0b;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-#intro h1 {
-  font-size: 42px;
-  letter-spacing: 4px;
-  opacity: 0;
-  transform: scale(0.96);
-  animation: introIn 1.2s ease forwards;
-}
-@keyframes introIn {
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-#intro.hide {
-  opacity: 0;
-  transition: opacity .4s ease;
-  pointer-events: none;
 }
 
-/* ===== UI ===== */
 .instruction {
   font-size: 14px;
   color: #ccc;
@@ -85,42 +53,52 @@ button {
   border: none;
   border-radius: 14px;
   cursor: pointer;
-  transition: transform .08s ease, box-shadow .08s ease;
 }
 
 .red {
   background: #e53935;
-  color: #fff;
-  box-shadow: 0 6px 14px rgba(229,57,53,.35);
+  color: white;
 }
+
 .green {
   background: #2ecc71;
   color: #081a0f;
   font-weight: 600;
-  box-shadow: 0 6px 14px rgba(46,204,113,.35);
 }
+
 .gray {
   background: #3a3a3a;
   color: #ddd;
 }
+
 .rest {
   background: #1e3a5f;
   color: #e8f2ff;
-  box-shadow: 0 8px 18px rgba(30,58,95,.45);
 }
 
-.box { margin-top: 28px; padding: 24px; }
-.hidden { display: none; }
+.box {
+  margin-top: 28px;
+  padding: 24px;
+}
 
-.time button { opacity: .4; }
+.hidden {
+  display: none;
+}
+
+.time button {
+  opacity: 0.4;
+}
 .time button.active {
   opacity: 1;
-  border: 2px solid #fff;
+  border: 2px solid white;
 }
 
-.final { font-size: 18px; line-height: 1.4; }
+.final {
+  font-size: 18px;
+  line-height: 1.4;
+}
 
-/* ===== ZROBIONE – SPOKOJNE DOMKNIĘCIE ===== */
+/* spokojniejsze ZROBIONE */
 .fade-up {
   animation: fadeUp .75s ease-out forwards;
 }
@@ -129,7 +107,7 @@ button {
   to   { opacity: 0; transform: translateY(-24px); filter: blur(4px); }
 }
 
-/* ===== SLEEP ===== */
+/* SLEEP */
 .zzz {
   display: flex;
   justify-content: center;
@@ -142,7 +120,6 @@ button {
   opacity: .8;
   animation: wave 2.4s infinite ease-in-out;
 }
-.zzz span:nth-child(n){animation-delay: calc(var(--i)*.2s);}
 @keyframes wave {
   0%{transform:translateY(0);opacity:.4;}
   50%{transform:translateY(-6px);opacity:1;}
@@ -158,14 +135,30 @@ button {
 }
 @keyframes fadeIn { to { opacity: 1; } }
 
-.done-mark { font-size: 20px; margin-left: 6px; }
+/* INTRO */
+#intro {
+  position: fixed;
+  inset: 0;
+  background: #0b0b0b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+#intro h1 {
+  font-size: 42px;
+  letter-spacing: 4px;
+  opacity: 0;
+  transform: scale(0.96);
+  transition: opacity 1.2s ease, transform 1.2s ease;
+}
 </style>
 </head>
 
 <body>
 
 <!-- INTRO -->
-<div id="intro" class="hidden">
+<div id="intro">
   <h1>NOW</h1>
 </div>
 
@@ -198,7 +191,7 @@ button {
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
-  <button class="green" onclick="doneTask()">ZROBIONE <span class="done-mark">👍</span></button>
+  <button class="green" onclick="doneTask()">ZROBIONE 👍</button>
 </div>
 
 <!-- EMPTY -->
@@ -211,8 +204,7 @@ button {
 <!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
   <div class="zzz">
-    <span style="--i:0">z</span><span style="--i:1">z</span><span style="--i:2">z</span>
-    <span style="--i:3">z</span><span style="--i:4">z</span><span style="--i:5">z</span>
+    <span>z</span><span>z</span><span>z</span><span>z</span><span>z</span><span>z</span>
   </div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
@@ -220,31 +212,33 @@ button {
 <script>
 const API = "https://now-production-9649.up.railway.app";
 
-let selectedTime=null, hasDoneAnything=false, lastAutoDecided=false;
+let selectedTime=null;
+let hasDoneAnything=false;
+let lastAutoDecided=false;
 
-/* ===== INTRO LOGIC ===== */
+/* INTRO – ZAWSZE DZIAŁA */
 (function(){
   const intro = document.getElementById("intro");
-  const today = new Date().toDateString();
-  const last = localStorage.getItem("now_intro_day");
+  const title = intro.querySelector("h1");
 
-  if (last !== today) {
-    intro.classList.remove("hidden");
-    setTimeout(() => intro.classList.add("hide"), 1200);
-    setTimeout(() => intro.remove(), 1600);
-    localStorage.setItem("now_intro_day", today);
-  } else {
-    // jeśli intro nie ma się pokazać — USUWAMY JE OD RAZU
+  requestAnimationFrame(()=>{
+    title.style.opacity = "1";
+    title.style.transform = "scale(1)";
+  });
+
+  setTimeout(()=>{
     intro.remove();
-  }
+  },1400);
 })();
 
-})();
-
-/* ===== CORE ===== */
-function hideAll(){document.querySelectorAll(".box").forEach(b=>b.classList.add("hidden"));}
-async function getState(){return (await fetch(API+"/state")).json();}
-
+/* CORE */
+function hideAll(){
+  document.querySelectorAll(".box").forEach(b=>b.classList.add("hidden"));
+}
+async function getState(){
+  const res = await fetch(API + "/state");
+  return res.json();
+}
 function setTime(t){
   selectedTime=t;
   ["t5","t15","t30"].forEach(id=>document.getElementById(id).classList.remove("active"));
@@ -252,7 +246,8 @@ function setTime(t){
 }
 
 async function render(){
-  const state=await getState(); hideAll();
+  const state = await getState();
+  hideAll();
 
   if(state.status==="IDLE" && state.chaos.length===1 && !lastAutoDecided){
     lastAutoDecided=true;
@@ -266,63 +261,82 @@ async function render(){
       (hasDoneAnything?emptyBox:idleBox).classList.remove("hidden");
       return;
     }
-    chaosInput.value=state.chaos.join("\n");
+    chaosInput.value = state.chaos.join("\n");
     idleBox.classList.remove("hidden");
   }
 
   if(state.status==="DECIDED"){
-    decidedTask.innerText=state.currentTask;
-    decideText.innerHTML=state.chaos.length===1
+    decidedTask.innerText = state.currentTask;
+    decideText.innerHTML =
+      state.chaos.length===1
       ?"Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
       :"To jest najlepszy ruch TERAZ.";
     decidedBox.classList.remove("hidden");
   }
 
   if(state.status==="DOING"){
-    doingTask.innerText=state.currentTask;
+    doingTask.innerText = state.currentTask;
     doingBox.classList.remove("hidden");
   }
 }
 
 async function decide(){
   if(!selectedTime) return alert("Wybierz czas na START.");
-  const state=await getState();
+  const state = await getState();
   if(state.chaos.length===0){
-    const tasks=chaosInput.value.split("\n").map(t=>t.trim()).filter(Boolean);
+    const tasks = chaosInput.value.split("\n").map(t=>t.trim()).filter(Boolean);
     if(!tasks.length) return;
-    await fetch(API+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tasks})});
+    await fetch(API+"/tasks",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({tasks})
+    });
   }
-  await fetch(API+"/decide",{method:"POST"}); render();
+  await fetch(API+"/decide",{method:"POST"});
+  render();
 }
 
-async function startTask(){await fetch(API+"/start",{method:"POST"}); render();}
+async function startTask(){
+  await fetch(API+"/start",{method:"POST"});
+  render();
+}
 
 async function doneTask(){
   doingTask.classList.add("fade-up");
   setTimeout(async()=>{
     await fetch(API+"/done",{method:"POST"});
-    hasDoneAnything=true; selectedTime=null;
+    hasDoneAnything=true;
+    selectedTime=null;
     doingTask.classList.remove("fade-up");
     render();
   },750);
 }
 
 async function skipTask(){
-  const state=await getState();
+  const state = await getState();
   if(state.chaos.length===1) return sleep();
   await fetch(API+"/later",{method:"POST"});
-  selectedTime=null; lastAutoDecided=false; render();
+  selectedTime=null;
+  lastAutoDecided=false;
+  render();
 }
 
 async function reset(){
-  await fetch(API+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tasks:[]})});
-  chaosInput.value=""; hasDoneAnything=false; selectedTime=null; lastAutoDecided=false;
+  await fetch(API+"/tasks",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({tasks:[]})
+  });
+  chaosInput.value="";
+  hasDoneAnything=false;
+  selectedTime=null;
+  lastAutoDecided=false;
   render();
 }
 
 function sleep(){
-  hideAll(); sleepBox.classList.remove("hidden");
-  setTimeout(()=>document.body.classList.add("fade-out"),5000);
+  hideAll();
+  sleepBox.classList.remove("hidden");
 }
 
 render();
@@ -330,4 +344,3 @@ render();
 
 </body>
 </html>
-
