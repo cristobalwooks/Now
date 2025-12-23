@@ -20,18 +20,13 @@ body {
   padding: 40px;
   transition: opacity 1.5s ease;
 }
-
 body.fade-out { opacity: 0; }
-
-/* ===== INSTRUCTION ===== */
 
 .instruction {
   font-size: 14px;
   color: #ccc;
   margin-bottom: 6px;
 }
-
-/* ===== INPUT ===== */
 
 textarea {
   width: 100%;
@@ -46,8 +41,6 @@ textarea {
   padding: 14px;
   font-size: 15px;
 }
-
-/* ===== BUTTONS ===== */
 
 button {
   margin: 10px 8px;
@@ -85,13 +78,10 @@ button {
   color: #ddd;
 }
 
-/* ===== LAYOUT ===== */
-
 .box {
   margin-top: 28px;
   padding: 24px;
 }
-
 .hidden { display: none; }
 
 .time button { opacity: 0.4; }
@@ -105,8 +95,6 @@ button {
   line-height: 1.4;
 }
 
-/* ===== DONE ANIMATION ===== */
-
 .fade-up {
   animation: fadeUp 0.45s ease-out forwards;
 }
@@ -115,35 +103,30 @@ button {
   to   { opacity: 0; transform: translateY(-20px); filter: blur(4px); }
 }
 
-/* ===== SLEEP ===== */
-
+/* SLEEP */
 .zzz {
   display: flex;
   justify-content: center;
   gap: 6px;
   margin-top: 12px;
 }
-
 .zzz span {
   font-size: 18px;
   color: #4fc3f7;
   opacity: 0.8;
   animation: wave 2.4s infinite ease-in-out;
 }
-
-.zzz span:nth-child(1) { animation-delay: 0s; }
-.zzz span:nth-child(2) { animation-delay: .2s; }
-.zzz span:nth-child(3) { animation-delay: .4s; }
-.zzz span:nth-child(4) { animation-delay: .6s; }
-.zzz span:nth-child(5) { animation-delay: .8s; }
-.zzz span:nth-child(6) { animation-delay: 1s; }
-
+.zzz span:nth-child(1){animation-delay:0s;}
+.zzz span:nth-child(2){animation-delay:.2s;}
+.zzz span:nth-child(3){animation-delay:.4s;}
+.zzz span:nth-child(4){animation-delay:.6s;}
+.zzz span:nth-child(5){animation-delay:.8s;}
+.zzz span:nth-child(6){animation-delay:1s;}
 @keyframes wave {
-  0%   { transform: translateY(0); opacity: .4; }
-  50%  { transform: translateY(-6px); opacity: 1; }
-  100% { transform: translateY(0); opacity: .4; }
+  0%{transform:translateY(0);opacity:.4;}
+  50%{transform:translateY(-6px);opacity:1;}
+  100%{transform:translateY(0);opacity:.4;}
 }
-
 .goodbye {
   margin-top: 28px;
   font-size: 13px;
@@ -154,20 +137,14 @@ button {
 }
 @keyframes fadeIn { to { opacity: 1; } }
 
-.done-mark {
-  font-size: 20px;
-  margin-left: 6px;
-}
+.done-mark { font-size: 20px; margin-left: 6px; }
 </style>
 </head>
 
 <body>
 
-<div id="header">
-  <h1>NOW</h1>
-</div>
+<div id="header"><h1>NOW</h1></div>
 
-<!-- IDLE -->
 <div id="idleBox" class="box hidden">
   <div class="instruction">Jedna linia = jedno zadanie</div>
   <textarea id="chaosInput" placeholder="Wpisz chaos..."></textarea>
@@ -182,7 +159,6 @@ button {
   <button class="red" onclick="decide()">ZDECYDUJ ZA MNIE</button>
 </div>
 
-<!-- DECIDED -->
 <div id="decidedBox" class="box hidden">
   <p id="decideText" class="final"></p>
   <p id="decidedTask"></p>
@@ -190,32 +166,147 @@ button {
   <button class="gray" onclick="skipTask()">NIE TERAZ</button>
 </div>
 
-<!-- DOING -->
 <div id="doingBox" class="box hidden">
   <h2>ROBISZ</h2>
   <p id="doingTask"></p>
-  <button class="green" onclick="doneTask()">
-    ZROBIONE <span class="done-mark">👍</span>
-  </button>
+  <button class="green" onclick="doneTask()">ZROBIONE <span class="done-mark">👍</span></button>
 </div>
 
-<!-- EMPTY -->
 <div id="emptyBox" class="box hidden">
   <p>Chaos zniknął. Dobra robota.</p>
   <button class="gray" onclick="sleep()">Odpoczywam</button>
   <button class="red" onclick="reset()">Nowy chaos</button>
 </div>
 
-<!-- SLEEP -->
 <div id="sleepBox" class="box hidden">
-  <div class="zzz">
-    <span>z</span><span>z</span><span>z</span><span>z</span><span>z</span><span>z</span>
-  </div>
+  <div class="zzz"><span>z</span><span>z</span><span>z</span><span>z</span><span>z</span><span>z</span></div>
   <div class="goodbye">Wróć, gdy będziesz mnie potrzebować.</div>
 </div>
 
 <script>
-/* LOGIKA BEZ ZMIAN – zostaje jak była */
+const API = "https://now-production-9649.up.railway.app";
+
+let selectedTime = null;
+let hasDoneAnything = false;
+let lastAutoDecided = false;
+
+function playTap() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const now = ctx.currentTime;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.frequency.value = 150;
+  g.gain.setValueAtTime(0.12, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+  o.connect(g).connect(ctx.destination);
+  o.start();
+  o.stop(now + 0.08);
+}
+
+function hideAll() {
+  document.querySelectorAll(".box").forEach(b => b.classList.add("hidden"));
+}
+
+async function getState() {
+  const res = await fetch(API + "/state");
+  return res.json();
+}
+
+function setTime(t) {
+  selectedTime = t;
+  ["t5","t15","t30"].forEach(id => document.getElementById(id).classList.remove("active"));
+  document.getElementById("t"+t).classList.add("active");
+}
+
+async function render() {
+  const state = await getState();
+  hideAll();
+
+  if (state.status === "IDLE" && state.chaos.length === 1 && !lastAutoDecided) {
+    lastAutoDecided = true;
+    await fetch(API + "/decide", { method: "POST" });
+    return render();
+  }
+
+  if (state.status === "IDLE") {
+    lastAutoDecided = false;
+    if (state.chaos.length === 0) {
+      (hasDoneAnything ? emptyBox : idleBox).classList.remove("hidden");
+      return;
+    }
+    chaosInput.value = state.chaos.join("\n");
+    idleBox.classList.remove("hidden");
+  }
+
+  if (state.status === "DECIDED") {
+    decidedTask.innerText = state.currentTask;
+    decideText.innerHTML =
+      state.chaos.length === 1
+        ? "Zostało jedno zadanie.<br>To jest najlepszy ruch TERAZ."
+        : "To jest najlepszy ruch TERAZ.";
+    decidedBox.classList.remove("hidden");
+  }
+
+  if (state.status === "DOING") {
+    doingTask.innerText = state.currentTask;
+    doingBox.classList.remove("hidden");
+  }
+}
+
+async function decide() {
+  if (!selectedTime) return alert("Wybierz czas na START.");
+  const state = await getState();
+  if (state.chaos.length === 0) {
+    const tasks = chaosInput.value.split("\n").map(t=>t.trim()).filter(Boolean);
+    if (!tasks.length) return;
+    await fetch(API+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tasks})});
+  }
+  await fetch(API+"/decide",{method:"POST"});
+  render();
+}
+
+async function startTask() {
+  await fetch(API+"/start",{method:"POST"});
+  render();
+}
+
+async function doneTask() {
+  playTap();
+  doingTask.classList.add("fade-up");
+  setTimeout(async()=>{
+    await fetch(API+"/done",{method:"POST"});
+    hasDoneAnything=true;
+    selectedTime=null;
+    doingTask.classList.remove("fade-up");
+    render();
+  },450);
+}
+
+async function skipTask() {
+  const state = await getState();
+  if (state.chaos.length === 1) return sleep();
+  await fetch(API+"/later",{method:"POST"});
+  selectedTime=null;
+  lastAutoDecided=false;
+  render();
+}
+
+async function reset() {
+  await fetch(API+"/tasks",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tasks:[]})});
+  chaosInput.value="";
+  hasDoneAnything=false;
+  selectedTime=null;
+  lastAutoDecided=false;
+  render();
+}
+
+function sleep() {
+  hideAll();
+  sleepBox.classList.remove("hidden");
+  setTimeout(()=>document.body.classList.add("fade-out"),5000);
+}
+
+render();
 </script>
 
 </body>
